@@ -117,25 +117,25 @@ def main():
         # Load data into it's raw format and pass in counters to record which words occur
         open_train_json = open(config.train_data_path)
         squad_train_data = json.load(open_train_json)
-        train_raw = SquadRaw(config, squad_train_data, counters, 'train', percentage=.007)
-        #train_raw = joblib.load('train_raw_07%.sav')
-        joblib.dump(train_raw, 'train_raw_07%.sav')
+        #train_raw = SquadRaw(config, squad_train_data, counters, 'train', percentage=.007)
+        train_raw = joblib.load('train_raw_07%.sav')
+        #joblib.dump(train_raw, 'train_raw_07%.sav')
 
-        test_raw = SquadRaw(config, squad_train_data, counters, 'validate')
-        #test_raw = joblib.load('train_raw_07%.sav')
-        glove_word_embedder = GloveEmbedder(counters.counter_dict['word_counter'], config.glove_word_embedding_path,
-                                            config.glove_word_size)
-        glove_char_embedder = GloveEmbedder(counters.counter_dict['char_counter'], config.glove_char_embedding_path,
-                                            config.glove_char_size)
-        joblib.dump(glove_word_embedder, 'glove_word_embedder_07%.sav')
-        joblib.dump(glove_char_embedder, 'glove_char_embedder_07%.sav')
+        #test_raw = SquadRaw(config, squad_train_data, counters, 'validate')
+        test_raw = joblib.load('train_raw_07%.sav')
+        # glove_word_embedder = GloveEmbedder(counters.counter_dict['word_counter'], config.glove_word_embedding_path,
+        #                                     config.glove_word_size)
+        # glove_char_embedder = GloveEmbedder(counters.counter_dict['char_counter'], config.glove_char_embedding_path,
+        #                                     config.glove_char_size)
+        # joblib.dump(glove_word_embedder, 'glove_word_embedder_07%.sav')
+        # joblib.dump(glove_char_embedder, 'glove_char_embedder_07%.sav')
 
-        train_emb = SquadEmb(config, train_raw, glove_word_embedder, glove_char_embedder)
-        joblib.dump(train_emb, 'train_embedding_07%.sav')
-        #train_emb = joblib.load('train_embedding_07%.sav')
+        #train_emb = SquadEmb(config, train_raw, glove_word_embedder, glove_char_embedder)
+        #joblib.dump(train_emb, 'train_embedding_07%.sav')
+        train_emb = joblib.load('train_embedding_07%.sav')
 
-        test_emb = SquadEmb(config, test_raw, glove_word_embedder, glove_char_embedder)
-        #test_emb = joblib.load('train_embedding_07%.sav')
+        #test_emb = SquadEmb(config, test_raw, glove_word_embedder, glove_char_embedder)
+        test_emb = joblib.load('train_embedding_07%.sav')
 
         trainloader = get_squad_dataloader(train_emb, batch_size=config.batch_size, shuffle=True)
         valloader = get_squad_dataloader(test_emb, batch_size=config.batch_size, shuffle=True)
