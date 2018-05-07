@@ -6,19 +6,24 @@ import numpy as np
 from helper_functions import exponential_mask
 
 class ScaledDotProductAttention(nn.Module):
-    def __init__(self, d_k, d_v, d_model):
+    def __init__(self, d_k, d_v, d_model, dropout=0):
         super(ScaledDotProductAttention, self).__init__()
         self.scale = np.power(d_k, .5)  #1/sqrt(d_k)
 
     def forward(self, Q, K, V, mask=None):
-        # Q.shape and K.shape = [B, L, d_k]
-        # V.shape = [B, L, d_v]
-        x = torch.bmm(Q, K.permute(0,2,1))  # [B, L, L]
+        #method2 and method3
+        # Q.shape and K.shape = [B, h, L, d_k]
+        # V.shape = [B, h, L, d_v]
+        x = torch.matmul(Q, K.permute(0,1,3,2))  # [B, h, L, L]
+
+        #method1
+        #x = torch.bmm(Q, K.permute(0,2,1))
+
         x = x/self.scale  # [B, L, L]
         if mask is not None:
-            x = F.softmax(exponential_mask(tensor=x, mask=mask), dim=2)
+            x = F.softmax(exponential_mask(tensor=x, mask=mask), dim=-1)
         else:
-            x = F.softmax(x, dim=2)  # [B, L, L]
-        x = torch.bmm(x, V)  # [B, L, d_v]
+            x = F.softmax(x, dim=-1)  # [B, h, L, L]
+        x = torch.matmul(x, V)  # [B, h, L, L] x [B, h, L, d_v] = [B, h, L, d_v]
         return x
 
