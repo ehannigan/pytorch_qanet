@@ -215,7 +215,7 @@ class QANetWrapper:
             cur_prediction_dict = self.get_prediction_dict(eval_raw.datapoint_dict, qa_id, p1, p2)
             prediction_dict.update(cur_prediction_dict)
 
-            running_loss += loss
+            running_loss += loss.data[0]
             count += 1
             if count >= self.config.max_val_batches:
                 break
@@ -288,7 +288,7 @@ class QANetWrapper:
             # f1 = self.get_f1(start_pred, answer_start_idx, end_pred, answer_end_idx)
 
             #loss = self.__get_loss(start_pred_masked, answer_start_idx, end_pred_masked, answer_end_idx)
-            running_loss += loss
+            running_loss += loss.data[0]
             count += 1
 
         total_loss = running_loss/count
