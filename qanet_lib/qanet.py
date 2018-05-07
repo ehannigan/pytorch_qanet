@@ -20,12 +20,14 @@ class QANet(nn.Module):
         self.question_limit = config.question_limit
         self.glove_char_dim = config.glove_char_dim
         #We additionally use dropout on word, character embeddings and between layers, where the word and character dropout rates are 0.1 and 0.05 respectively
-        # self.context_word_embed_dropout = nn.Dropout(config.word_emb_dropout)
-        # self.context_char_embed_dropout = nn.Dropout(config.char_emb_dropout)
-        # self.question_word_embed_dropout = nn.Dropout(config.word_emb_dropout)
-        # self.question_char_embed_dropout = nn.Dropout(config.char_emb_dropout)
+
+        self.context_word_embed_dropout = nn.Dropout(config.word_emb_dropout)
+        self.context_char_embed_dropout = nn.Dropout(config.char_emb_dropout)
+        self.question_word_embed_dropout = nn.Dropout(config.word_emb_dropout)
+        self.question_char_embed_dropout = nn.Dropout(config.char_emb_dropout)
 
         self.char_emb_conv = ConvEmb(in_channels=config.glove_char_dim, out_channels=config.glove_char_dim, kernel_size=5)
+
 
         context_input_shape = (config.glove_char_dim+config.glove_word_dim, config.context_limit)
         question_input_shape = (config.glove_char_dim+config.glove_word_dim, config.question_limit)
@@ -98,10 +100,10 @@ class QANet(nn.Module):
 
     def forward(self, context_word_emb, context_char_emb, question_word_emb, question_char_emb):
 
-        # context_word_emb = self.context_word_embed_dropout(context_word_emb)
-        # context_char_emb = self.context_char_embed_dropout(context_char_emb)
-        # question_word_emb = self.question_word_embed_dropout(question_word_emb)
-        # question_char_emb = self.question_char_embed_dropout(question_char_emb)
+        context_word_emb = self.context_word_embed_dropout(context_word_emb)
+        context_char_emb = self.context_char_embed_dropout(context_char_emb)
+        question_word_emb = self.question_word_embed_dropout(question_word_emb)
+        question_char_emb = self.question_char_embed_dropout(question_char_emb)
 
         #reshapd char embeddings
         batchsize = context_word_emb.shape[0]

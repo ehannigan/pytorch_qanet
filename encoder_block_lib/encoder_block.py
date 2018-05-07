@@ -20,9 +20,9 @@ class EncoderBlock(nn.Module):
                                            norm=norm,
                                            layer_dropout=layer_dropout,
                                            total_layers=total_layers)
-        self.multi_head_attention_block = MultiHeadAttentionBlock(num_heads=num_heads,
-                                                                  d_model=d_model,
-                                                                  norm=norm)
+        # self.multi_head_attention_block = MultiHeadAttentionBlock(num_heads=num_heads,
+        #                                                           d_model=d_model,
+        #                                                           norm=norm)
         #self.multi_head_dropout = LayerDropout(layer_dropout=layer_dropout, total_layers=total_layers)
         #attention_input_shape = self.__get_attention_input_shape(input_shape)
         #self.attention_block = AttentionBlock(input_shape)
@@ -33,7 +33,7 @@ class EncoderBlock(nn.Module):
 
     def forward(self, x, mask=None):
         x = self.conv_block(x)
-        x = self.multi_head_attention_block(x, mask=mask)
+        #x = self.multi_head_attention_block(x, mask=mask)
         #x = self.multi_head_dropout(x)
         x = self.forward_block(x)
         #x = self.forward_dropout(x)

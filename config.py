@@ -1,10 +1,10 @@
 class Config:
     def __init__(self):
-        self.experiment_no = 16
+        self.experiment_no = 5
         self.experiment_dir = 'experiments/experiment_{}/'
         self.checkpoint_dir = 'model_checkpoints/'
         self.checkpoint_name = 'checkpoint_epoch_{}'
-        self.load_from_epoch_no = 0
+        self.load_from_epoch_no = 4
 
         self.char_limit = 16
         self.context_limit = 400
@@ -15,13 +15,13 @@ class Config:
         self.glove_char_size = 94
         self.glove_char_dim = 300
 
-        self.batch_size = 10
+        self.batch_size = 32
         self.max_val_batches = 10
         self.num_epochs = 10
-        self.print_freq = 10
-        self.learning_rate = 0.0001
-        self.num_learning_rate_warm_up_steps = 500
-        self.optimizer_name = 'sgd'
+        self.print_freq = 100
+        self.learning_rate = 0.001
+        self.num_learning_rate_warm_up_steps = 200
+        self.optimizer_name = 'adam'
         self.criterion_name = 'cross_entropy_loss'
 
         self.dev_data_path = 'data_files/squad_datasets/dev-v1.1.json'
@@ -36,11 +36,11 @@ class Config:
 
         self.cuda_flag = True
 
-        self.d_model = 32
+        self.d_model = 96
 
         #dropout
-        self.word_emb_dropout = 0
-        self.char_emb_dropout = 0
+        self.word_emb_dropout = .1
+        self.char_emb_dropout = .05
         self.trilinear_dropout = 0
         self.highway_dropout = 0
         self.layer_dropout = 0
@@ -48,7 +48,7 @@ class Config:
 
         #masking
         self.self_attention_mask = False
-        self.c2q_mask = False
+        self.c2q_mask = True
         self.pred_mask = True
 
         #highway variables

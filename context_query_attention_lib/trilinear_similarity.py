@@ -4,12 +4,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class TrilinearSimilarity(nn.Module):
-    def __init__(self, in_shape, out_shape=1, dropout=1):
+    def __init__(self, in_shape, out_shape=1, dropout=0):
         super(TrilinearSimilarity, self).__init__()
         # in_shape = [hidden_size, context or question limit]
         self.out_shape = out_shape
         self.fc = nn.Linear(in_features=in_shape[0]*3, out_features=self.out_shape)
-        self.trilinear_dropout = nn.Dropout(dropout)
+        #self.trilinear_dropout = nn.Dropout(dropout)
 
     def forward(self, C, Q, M):
         # C: tiled context (N, context_limit, question_limit, d)
@@ -23,7 +23,7 @@ class TrilinearSimilarity(nn.Module):
         # S_flat.shape = (N*CL*QL, 1)
         S = self.__unflatten(S_flat, original_shape).squeeze(-1)
         # S.shape = (N, CL, QL, 1).squeeze(-1) = (N, CL, QL)
-        S = self.trilinear_dropout(S)
+        #S = self.trilinear_dropout(S)
         return S
 
 

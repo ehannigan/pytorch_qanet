@@ -7,7 +7,7 @@ from helper_functions import exponential_mask
 
 
 class ContextQueryAttention(nn.Module):
-    def __init__(self, config, C_shape, Q_shape, dropout=1):
+    def __init__(self, config, C_shape, Q_shape, dropout=0):
         # C_shape = [hidden_size, context_limit]
         super(ContextQueryAttention, self).__init__()
         self.config = config

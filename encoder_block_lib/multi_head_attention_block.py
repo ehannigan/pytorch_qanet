@@ -13,8 +13,8 @@ class MultiHeadAttentionBlock(nn.Module):
     def forward(self, x, mask=None):
         residual = x.clone()
         x = self.norm(x)
-        Q = x.clone()
-        K = x.clone()
-        V = x.clone()
+        Q = x
+        K = x
+        V = x
         x = self.multi_head_attention(Q=Q, K=K, V=V, mask=mask).permute(0, 2, 1)  #[B, L, d_model]
         return x + residual

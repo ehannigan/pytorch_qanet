@@ -51,7 +51,7 @@ def main():
     checkpoint_dir = os.path.join(experiment_dir, config.checkpoint_dir)
     make_dirs(checkpoint_dir)
     checkpoint_path = os.path.join(checkpoint_dir, config.checkpoint_name)
-    run_type = 'new_run'
+    run_type = 'overfit'
 
 
 
@@ -96,11 +96,12 @@ def main():
         valloader = get_squad_dataloader(dev_emb, batch_size=config.batch_size, shuffle=True)
         devloader = get_squad_dataloader(dev_emb, batch_size=config.batch_size, shuffle=False)
         qanet_object = QANetWrapper(config, checkpoint_path)
-        qanet_object.train(trainloader, train_raw=train_raw, valloader=valloader, val_raw=dev_raw)
+        #qanet_object.train(trainloader, train_raw=train_raw, valloader=valloader, val_raw=dev_raw)
+        qanet_object.load_model(checkpoint_path, config.load_from_epoch_no)
         qanet_object.loss_plotter.plot(os.path.join(experiment_dir, 'overfit_loss'))
         qanet_object.f1_plotter.plot(os.path.join(experiment_dir, 'overfit_f1'))
         qanet_object.EM_plotter.plot(os.path.join(experiment_dir, 'overfit_em'))
-        #qanet_object.load_model(checkpoint_path, config.load_from_epoch_no)
+
         total_loss, prediction_dict = qanet_object.predict(devloader, dev_raw)
         joblib.dump(prediction_dict, os.path.join(experiment_dir, 'overfit_prediction_dict_dev_100%_epoch1.sav'))
         #pred_answer_dict = joblib.load(os.path.join(experiment_dir, 'overfit_prediction_dict_dev_100%_epoch8.sav'))
@@ -116,30 +117,31 @@ def main():
         # Load data into it's raw format and pass in counters to record which words occur
         open_train_json = open(config.train_data_path)
         squad_train_data = json.load(open_train_json)
-        #train_raw = SquadRaw(config, squad_train_data, counters, 'train', percentage=.01)
-        train_raw = joblib.load('train_raw_1%.sav')
-        #joblib.dump(train_raw, 'train_raw_1%.sav')
+        train_raw = SquadRaw(config, squad_train_data, counters, 'train', percentage=.007)
+        #train_raw = joblib.load('train_raw_1%.sav')
+        joblib.dump(train_raw, 'train_raw_07%.sav')
 
-        #test_raw = SquadRaw(config, squad_train_data, counters, 'validate')
-        test_raw = joblib.load('train_raw_1%.sav')
-        # glove_word_embedder = GloveEmbedder(counters.counter_dict['word_counter'], config.glove_word_embedding_path,
-        #                                     config.glove_word_size)
-        # glove_char_embedder = GloveEmbedder(counters.counter_dict['char_counter'], config.glove_char_embedding_path,
-        #                                     config.glove_char_size)
-        # joblib.dump(glove_word_embedder, 'glove_word_embedder.sav')
-        # joblib.dump(glove_char_embedder, 'glove_char_embedder.sav')
-        #
-        # train_emb = SquadEmb(config, train_raw, glove_word_embedder, glove_char_embedder)
-        # joblib.dump(train_emb, 'train_embedding_1%.sav')
-        train_emb = joblib.load('train_embedding_1%.sav')
+        test_raw = SquadRaw(config, squad_train_data, counters, 'validate')
+        #test_raw = joblib.load('train_raw_1%.sav')
+        glove_word_embedder = GloveEmbedder(counters.counter_dict['word_counter'], config.glove_word_embedding_path,
+                                            config.glove_word_size)
+        glove_char_embedder = GloveEmbedder(counters.counter_dict['char_counter'], config.glove_char_embedding_path,
+                                            config.glove_char_size)
+        joblib.dump(glove_word_embedder, 'glove_word_embedder_07%.sav')
+        joblib.dump(glove_char_embedder, 'glove_char_embedder_07%.sav')
 
-        #test_emb = SquadEmb(config, test_raw, glove_word_embedder, glove_char_embedder)
-        test_emb = joblib.load('train_embedding_1%.sav')
+        train_emb = SquadEmb(config, train_raw, glove_word_embedder, glove_char_embedder)
+        joblib.dump(train_emb, 'train_embedding_07%.sav')
+        #train_emb = joblib.load('train_embedding_01%.sav')
+
+        test_emb = SquadEmb(config, test_raw, glove_word_embedder, glove_char_embedder)
+        #test_emb = joblib.load('train_embedding_01%.sav')
 
         trainloader = get_squad_dataloader(train_emb, batch_size=config.batch_size, shuffle=True)
+        valloader = get_squad_dataloader(test_emb, batch_size=config.batch_size, shuffle=True)
         devloader = get_squad_dataloader(test_emb, batch_size=config.batch_size, shuffle=False)
         qanet_object = QANetWrapper(config, checkpoint_path)
-        qanet_object.train(trainloader, train_raw=train_raw)
+        qanet_object.train(trainloader, train_raw=train_raw, valloader=valloader, val_raw=test_raw)
         #qanet_object.train_val_plotter.plot_train_val(os.path.join(experiment_dir, 'overfit_train_val_plot'))
         #qanet_object.load_model(checkpoint_path, config.load_from_epoch_no)
         total_loss, prediction_dict = qanet_object.predict(devloader, test_raw)

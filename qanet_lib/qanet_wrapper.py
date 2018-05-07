@@ -12,6 +12,7 @@ import os
 from helper_functions import evaluate_predictions
 from helper_functions import metric_max_over_ground_truths
 from helper_functions import exact_match_score, f1_score
+import gc
 
 class QANetWrapper:
     def __init__(self, config, checkpoint_path):
@@ -64,6 +65,7 @@ class QANetWrapper:
             running_loss = 0
 
             for i, batch in enumerate(trainloader):
+                self.net.train()
                 # if self.global_step < self.config.num_learning_rate_warm_up_steps:
                 #     self.optimizer = self.__learning_rate_warm_up(optimizer=self.optimizer, global_step=self.global_step)
                 self.optimizer.zero_grad()
@@ -93,8 +95,8 @@ class QANetWrapper:
                                            answer_start_idx=answer_start_idx,
                                            answer_end_idx=answer_end_idx)
                 #print('loss.shape', loss.shape)
-
                 loss.backward()
+
                 # for f in self.net.parameters():
                 #     print('data is')
                 #     print(f.data)
@@ -103,6 +105,7 @@ class QANetWrapper:
 
                 self.optimizer.step()
                 self.global_step += 1
+
 
                 running_loss += loss.data[0]
                 if (i%self.config.print_freq) == (self.config.print_freq-1):
@@ -118,9 +121,9 @@ class QANetWrapper:
                         self.loss_plotter.update_val_lists(val_loss)
                         self.f1_plotter.update_val_lists(val_eval['f1'])
                         self.EM_plotter.update_val_lists(val_eval['exact_match'])
-                        print('epoch: {} i: {} || train_loss: {}, val_loss: {}, train_f1: {}, val_f1: {}'.format(epoch+1, i+1, cur_loss, val_loss, train_eval['f1'], val_eval['f1']))
+                        print('epoch: {} gs: {} || train_loss: {}, val_loss: {}, train_f1: {}, val_f1: {}'.format(epoch+1, self.global_step+1, cur_loss, val_loss, train_eval['f1'], val_eval['f1']))
                     else:
-                        print('epoch: {} i: {} || train_loss: {}, train_f1: {}'.format(epoch + 1, i + 1, cur_loss, train_eval['f1']))
+                        print('epoch: {} gs: {} || train_loss: {}, train_f1: {}'.format(epoch + 1, self.global_step + 1, cur_loss, train_eval['f1']))
                     running_loss = 0
 
             self.save_checkpoint(epoch, self.global_step)
