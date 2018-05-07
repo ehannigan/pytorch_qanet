@@ -44,7 +44,7 @@ class Config:
         self.trilinear_dropout = 0
         self.highway_dropout = 0
         self.layer_dropout = 0
-        self.general_dropout = 0
+        self.general_dropout = .1
 
         #masking
         self.self_attention_mask = False
@@ -65,7 +65,7 @@ class Config:
         self.emb_num_heads = 8
 
         #model block variables
-        self.num_mod_blocks = 7
+        self.num_mod_blocks = 5
         self.num_mod_conv = 2
         self.mod_kernel = 5
         self.mod_depthwise = False
