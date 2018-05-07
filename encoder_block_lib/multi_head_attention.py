@@ -38,7 +38,7 @@ class MultiHeadAttention(nn.Module):
         # Q = [B, d_model, CL]
         batchsize = Q.shape[0]
         #method3
-        q, k, v = [self.W(x.permute(0,2,1)).view(batchsize, -1, self.num_heads, self.d_k).permute(0, 2, 1, 3) for W, x in zip(self.Ws, (Q,K,V))]
+        q, k, v = [W(x.permute(0,2,1)).view(batchsize, -1, self.num_heads, self.d_k).permute(0, 2, 1, 3) for W, x in zip(self.Ws, (Q,K,V))]
         heads_concat = self.attention(Q=q, K=k, V=v, mask=mask).permute(0, 2, 1, 3).contiguous().view(batchsize, -1, self.d_model)
         attend = self.Ws[-1](heads_concat)
 
