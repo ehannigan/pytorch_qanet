@@ -1,10 +1,10 @@
 class Config:
     def __init__(self):
-        self.experiment_no = 7
+        self.experiment_no = 10
         self.experiment_dir = 'experiments/experiment_{}/'
         self.checkpoint_dir = 'model_checkpoints/'
         self.checkpoint_name = 'checkpoint_epoch_{}'
-        self.load_from_epoch_no = 1
+        self.load_from_epoch_no = 0
 
         self.char_limit = 16
         self.context_limit = 400
@@ -20,7 +20,7 @@ class Config:
         self.num_epochs = 10
         self.print_freq = 100
         self.learning_rate = 0.001
-        self.num_learning_rate_warm_up_steps = 200
+        self.num_learning_rate_warm_up_steps = 1000
         self.optimizer_name = 'adam'
         self.criterion_name = 'cross_entropy_loss'
 
@@ -65,7 +65,7 @@ class Config:
         self.emb_num_heads = 8
 
         #model block variables
-        self.num_mod_blocks = 1
+        self.num_mod_blocks = 7
         self.num_mod_conv = 2
         self.mod_kernel = 5
         self.mod_depthwise = False
