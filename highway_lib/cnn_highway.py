@@ -5,13 +5,16 @@ class CnnHighway(nn.Module):
     """Pytorch nn.Module that list of single CnnHighwayUnit
 
     """
-    def __init__(self, num_layers, input_size, hidden_size, kernel_size, stride=1):
+    def __init__(self, num_layers, input_size, d_model, kernel_size, dropout=1, stride=1):
         super(CnnHighway, self).__init__()
 
         padding = self.__calc_padding(input_size, kernel_size, stride)
-        self.highway_layers = nn.ModuleList()
-        self.highway_layers.append(CnnHighwayUnit(input_size=input_size, hidden_size=hidden_size, kernel_size=kernel_size, padding=padding, stride=stride))
-        self.highway_layers = nn.ModuleList([CnnHighwayUnit(input_size=input_size, hidden_size=hidden_size, kernel_size=kernel_size, padding=padding, stride=stride) for _ in range(num_layers)])
+        self.highway_layers = nn.ModuleList([CnnHighwayUnit(input_size=input_size,
+                                                            d_model=d_model,
+                                                            kernel_size=kernel_size,
+                                                            padding=padding,
+                                                            dropout=dropout,
+                                                            stride=stride) for _ in range(num_layers)])
 
 
     def forward(self, x):

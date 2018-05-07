@@ -15,7 +15,6 @@ class SquadPytorchDataset(Dataset):
         context_word_emb = self.squad_emb.get_context_word_emb(idx)
         context_char_emb = self.squad_emb.get_context_char_emb(idx)
 
-
         question_word_emb = self.squad_emb.get_question_word_emb(idx)
         question_char_emb = self.squad_emb.get_question_char_emb(idx)
 
