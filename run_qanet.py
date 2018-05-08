@@ -51,7 +51,7 @@ def main():
     checkpoint_dir = os.path.join(experiment_dir, config.checkpoint_dir)
     make_dirs(checkpoint_dir)
     checkpoint_path = os.path.join(checkpoint_dir, config.checkpoint_name)
-    run_type = 'overfit'
+    run_type = 'new_run'
 
 
 
