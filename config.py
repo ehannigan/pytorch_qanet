@@ -61,14 +61,14 @@ class Config:
         self.num_emb_blocks = 1
         self.num_emb_conv = 4
         self.emb_kernel = 7
-        self.emb_depthwise = False
+        self.emb_depthwise = True
         self.emb_num_heads = 8
 
         #model block variables
-        self.num_mod_blocks = 5
+        self.num_mod_blocks = 3
         self.num_mod_conv = 2
         self.mod_kernel = 5
-        self.mod_depthwise = False
+        self.mod_depthwise = True
         self.mod_num_heads = 8
 
 
