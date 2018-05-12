@@ -5,7 +5,7 @@ class CnnHighway(nn.Module):
     """Pytorch nn.Module that list of single CnnHighwayUnit
 
     """
-    def __init__(self, num_layers, input_size, d_model, kernel_size, dropout=0, stride=1):
+    def __init__(self, num_layers, input_size, d_model, kernel_size, dropout=1, stride=1):
         super(CnnHighway, self).__init__()
 
         padding = self.__calc_padding(input_size, kernel_size, stride)

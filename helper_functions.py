@@ -49,9 +49,9 @@ def f1_score(prediction, ground_truth):
 
 
 
-def LayerDropout(total_layers, layer_dropout):
+def LayerDropout(layer_dropout=0, total_layers=0):
     #return nn.Dropout(1-(1/total_layers)*(1-layer_dropout))
-    return nn.Dropout(0)
+    return nn.Dropout(layer_dropout)
 
 
 def exact_match_score(prediction, ground_truth):

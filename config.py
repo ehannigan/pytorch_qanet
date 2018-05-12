@@ -1,10 +1,12 @@
 class Config:
     def __init__(self):
-        self.experiment_no = 10
+        self.train = False
+        self.load = True
+        self.experiment_no = 9
         self.experiment_dir = 'experiments/experiment_{}/'
         self.checkpoint_dir = 'model_checkpoints/'
         self.checkpoint_name = 'checkpoint_epoch_{}'
-        self.load_from_epoch_no = 0
+        self.load_from_epoch_no = 4
 
         self.char_limit = 16
         self.context_limit = 400
@@ -65,7 +67,7 @@ class Config:
         self.emb_num_heads = 8
 
         #model block variables
-        self.num_mod_blocks = 3
+        self.num_mod_blocks = 2
         self.num_mod_conv = 2
         self.mod_kernel = 5
         self.mod_depthwise = True

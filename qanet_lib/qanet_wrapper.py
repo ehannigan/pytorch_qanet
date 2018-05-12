@@ -66,8 +66,8 @@ class QANetWrapper:
 
             for i, batch in enumerate(trainloader):
                 self.net.train()
-                # if self.global_step < self.config.num_learning_rate_warm_up_steps:
-                #     self.optimizer = self.__learning_rate_warm_up(optimizer=self.optimizer, global_step=self.global_step)
+                if self.global_step < self.config.num_learning_rate_warm_up_steps:
+                    self.optimizer = self.__learning_rate_warm_up(optimizer=self.optimizer, global_step=self.global_step)
                 self.optimizer.zero_grad()
 
                 context_word_emb, context_char_emb, question_word_emb, question_char_emb, answer_start_idx, answer_end_idx, qa_id = self.__extract_from_batch(batch=batch, volatile_flag=volatile_flag)

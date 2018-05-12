@@ -7,6 +7,7 @@ from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 from embed_lib.conv_emb import ConvEmb
+from helper_functions import LayerDropout
 
 
 
@@ -37,14 +38,14 @@ class QANet(nn.Module):
                                           d_model=context_input_shape[0],
                                           kernel_size=config.hw_kernel,
                                           stride=config.hw_stride,
-                                          dropout=config.highway_dropout)
+                                          dropout=config.general_dropout)
 
         self.question_highway = CnnHighway(num_layers=config.hw_layers,
                                            input_size=question_input_shape,
                                            d_model=context_input_shape[0],
                                            kernel_size=config.hw_kernel,
                                            stride=config.hw_stride,
-                                           dropout=config.highway_dropout)
+                                           dropout=config.general_dropout)
         print('created context highways')
         # highway does not change the shape of the data
         # input shape should still be (batch_size, hidden_size, context/question_limit, glove_char_dim+glove_word_dim)
@@ -71,7 +72,7 @@ class QANet(nn.Module):
         # context and question input shapes should not be changing after stacked embedding encoder block
 
 
-        self.context_query_attention = ContextQueryAttention(config=config, C_shape=context_input_shape, Q_shape=question_input_shape, dropout=config.trilinear_dropout)
+        self.context_query_attention = ContextQueryAttention(config=config, C_shape=context_input_shape, Q_shape=question_input_shape, dropout=config.general_dropout)
         print('created query attention')
         attention_shape = (config.d_model*4, config.context_limit)
 
