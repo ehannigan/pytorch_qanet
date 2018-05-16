@@ -1,22 +1,24 @@
 class Config:
     def __init__(self):
-        self.train = False
-        self.load = True
-        self.experiment_no = 9
+        self.run_type = 'sanity_check'
+        self.train = True
+        self.train_percentage = .05
+        self.load = False
+        self.experiment_no = 0
+        self.load_from_epoch_no = 0
         self.experiment_dir = 'experiments/experiment_{}/'
         self.checkpoint_dir = 'model_checkpoints/'
         self.checkpoint_name = 'checkpoint_epoch_{}'
-        self.load_from_epoch_no = 4
+
 
         self.char_limit = 16
         self.context_limit = 400
         self.question_limit = 50
         self.answer_limit = 30
         self.glove_word_size = int(2.2e6)
-        self.glove_word_dim = 200
-        self.glove_char_size = 94
-        self.glove_char_dim = 300
+        self.d_model = 96
 
+        #training
         self.batch_size = 32
         self.max_val_batches = 10
         self.num_epochs = 10
@@ -30,15 +32,18 @@ class Config:
         self.train_data_path = 'data_files/squad_datasets/train-v1.1.json'
 
         self.glove_word_embedding_path = 'data_files/glove_txt/glove.6B.200d.txt'
+        self.glove_word_dim = 200
         self.glove_char_embedding_path = 'data_files/glove_txt/glove.840B.300d-char.txt'
+        self.glove_char_dim = 300
+        self.word_vocab_size = 40000
+        self.char_vocab_size = 94
+        self.embedding_note = 'word_vocab_40000'
 
         self.train_val_plotter_path = 'train_val_plotter.sav'
 
-        self.counter_name = 'counter.sav'
-
         self.cuda_flag = True
 
-        self.d_model = 96
+
 
         #dropout
         self.word_emb_dropout = .1
@@ -57,7 +62,11 @@ class Config:
         self.hw_layers = 2
         self.hw_stride = 1
         self.hw_kernel = 3
+        self.highway_dropout = 0
 
+
+        #context query attention
+        self.cqa_dropout = 0
 
         #embedding block variables
         self.num_emb_blocks = 1

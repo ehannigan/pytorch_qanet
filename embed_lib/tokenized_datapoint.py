@@ -1,4 +1,4 @@
-class RawDatapoint:
+class TokenizedDatapoint:
     def __init__(self):
         self.context_spans = []
         self.context_tokens = []

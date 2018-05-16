@@ -1,14 +1,14 @@
-from embed_lib.raw_datapoint import RawDatapoint
+from embed_lib.tokenized_datapoint import TokenizedDatapoint
 import re
 import nltk
 
 from tqdm import tqdm
-class SquadRaw:
-    def __init__(self, config, squad_data, counters, dataset_name, percentage=1):
+class TokenizedSquad:
+    def __init__(self, config, squad_data, dataset_name, percentage=1):
         self.dataset_name = dataset_name
         self.datapoint_dict = {}
         self.config = config
-        self.__load_squad_data(squad_data, counters, percentage=percentage)
+        self.__load_squad_data(squad_data, percentage=percentage)
 
     def __process_tokens(self, temp_tokens):
         tokens = []
@@ -35,7 +35,7 @@ class SquadRaw:
             current_char += len(token)
         return context_spans
 
-    def __load_answers(self, qa, example):
+    def __load_answers(self, qa, datapoint):
             answer_start_idxs = []
             answer_end_idxs = []
             answer_texts = []
@@ -46,7 +46,7 @@ class SquadRaw:
                 answer_stop_char_idx = answer_start_char_idx + len(answer_text)
                 answer_span = []
 
-                for word_idx, word_span in enumerate(example.context_spans):
+                for word_idx, word_span in enumerate(datapoint.context_spans):
                     if not (answer_stop_char_idx <= word_span[0] or answer_start_char_idx >= word_span[1]):
                         answer_span.append(word_idx)
                 answer_start_idx, answer_end_idx = answer_span[0], answer_span[-1]
@@ -55,30 +55,23 @@ class SquadRaw:
                 answer_start_idxs.append(answer_start_idx)
                 answer_end_idxs.append(answer_end_idx)
 
+            datapoint.answer_texts = answer_texts
+            datapoint.answer_start_idxs = answer_start_idxs
+            datapoint.answer_end_idxs = answer_end_idxs
 
-            example.answer_texts = answer_texts
-            example.answer_start_idxs = answer_start_idxs
-            example.answer_end_idxs = answer_end_idxs
-
-    def __load_squad_data(self, squad_data, counters, percentage):
+    def __load_squad_data(self, squad_data, percentage):
         # parses squad data into context, questions, and answers
         # if os.path.exists(self.config.)
         start_ai = 0
         stop_ai = int(round(len(squad_data['data']) * percentage))
         for article_idx, article in enumerate(tqdm(squad_data['data'][start_ai:stop_ai])):
             total_question_count = 0
-            
+
             for para_idx, para in enumerate(article['paragraphs']):
                 context = para['context'].replace("''", '" ').replace("``", '" ')
                 context_tokens = [token.replace("''", '"').replace("``", '"') for token in nltk.word_tokenize(context)]
                 context_chars = [list(word) for word in context_tokens]
                 context_spans = self.__get_context_spans(context, context_tokens)
-                
-                for word in context_tokens:
-                    counters.counter_dict['word_counter'][word] += len(para['qas'])
-                    counters.counter_dict['lower_word_counter'][word.lower()] += len(para['qas'])
-                    for char in word:
-                        counters.counter_dict['char_counter'][char] += len(para['qas'])
 
                 for qa in para['qas']:
                     total_question_count += 1
@@ -86,34 +79,28 @@ class SquadRaw:
                     question_tokens = nltk.word_tokenize(question)
                     question_chars = [list(word) for word in question_tokens]
 
-                    for word in question_tokens:
-                        counters.counter_dict['word_counter'][word] += 1
-                        counters.counter_dict['lower_word_counter'][word] += 1
-                        for char in word:
-                            counters.counter_dict['char_counter'][char] += 1
+                    datapoint = TokenizedDatapoint()
+                    datapoint.context = context
+                    datapoint.context_tokens = context_tokens  # process tokens
+                    datapoint.context_chars = context_chars
+                    datapoint.context_spans = context_spans
 
-                    example = RawDatapoint()
-                    example.context = context
-                    example.context_tokens = context_tokens  # process tokens
-                    example.context_chars = context_chars
-                    example.context_spans = context_spans
+                    datapoint.question_tokens = question_tokens
+                    datapoint.question_chars = question_chars
+                    datapoint.question_id = total_question_count
 
-                    example.question_tokens = question_tokens
-                    example.question_chars = question_chars
-                    example.question_id = total_question_count
-
-                    example.uuid = qa['id']
+                    datapoint.uuid = qa['id']
 
                     if self.dataset_name == 'train' or self.dataset_name == 'validate':
-                        self.__load_answers(qa, example)
+                        self.__load_answers(qa, datapoint)
                     elif self.dataset_name == 'test':
                         # if in test phase, no answers will be provided.
-                        example.answer_texts = [None]
-                        example.answer_start_idxs = [None]
-                        example.answer_end_idxs = [None]
+                        datapoint.answer_texts = [None]
+                        datapoint.answer_start_idxs = [None]
+                        datapoint.answer_end_idxs = [None]
 
 
-                    self.datapoint_dict[str(qa['id'])] = example
+                    self.datapoint_dict[str(qa['id'])] = datapoint
 
 
 

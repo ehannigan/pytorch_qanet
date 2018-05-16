@@ -7,12 +7,12 @@ from helper_functions import LayerDropout
 
 
 class StackedEncoderBlock(nn.Module):
-    def __init__(self, num_encoder_blocks, num_conv_blocks, num_heads, d_model, kernel_size, input_shape, layer_dropout=1, general_dropout=1, depthwise=False, norm='batch'):
+    def __init__(self, num_encoder_blocks, num_conv_blocks, num_heads, out_channels, kernel_size, input_shape, layer_dropout=1, general_dropout=1, depthwise=False, norm='batch'):
         super(StackedEncoderBlock, self).__init__()
         self.input_shape = input_shape
         self.num_encoder_blocks = num_encoder_blocks
         self.num_conv_blocks = num_conv_blocks
-        self.d_model = d_model
+        self.out_channels = out_channels
         self.kernel_size = kernel_size
         self.depthwise = depthwise
         self.num_heads = num_heads
@@ -33,7 +33,7 @@ class StackedEncoderBlock(nn.Module):
         #self.encoder_block_dropouts = nn.ModuleList()
         for i in range(self.num_encoder_blocks):
             self.encoder_blocks.append(EncoderBlock(num_conv_blocks=self.num_conv_blocks,
-                                                      d_model=self.d_model,
+                                                    out_channels=self.out_channels,
                                                       kernel_size=self.kernel_size,
                                                       input_shape=self.input_shape,
                                                       depthwise=self.depthwise,

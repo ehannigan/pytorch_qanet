@@ -13,14 +13,18 @@ from helper_functions import LayerDropout
 
 class QANet(nn.Module):
 
-    def __init__(self, config):
+    def __init__(self, config, word_emb_weights, char_emb_weights):
         super(QANet, self).__init__()
+
         self.encoder_masking_flag = config.self_attention_mask
         self.c2q_masking_flag = config.c2q_mask
         self.context_limit = config.context_limit
         self.question_limit = config.question_limit
         self.glove_char_dim = config.glove_char_dim
         #We additionally use dropout on word, character embeddings and between layers, where the word and character dropout rates are 0.1 and 0.05 respectively
+        self.word_embedding = nn.Embedding.from_pretrained(embeddings=word_emb_weights, freeze=True)
+        self.char_embedding = nn.Embedding.from_pretrained(embeddings=char_emb_weights, freeze=True)
+
 
         self.context_word_embed_dropout = nn.Dropout(config.word_emb_dropout)
         self.context_char_embed_dropout = nn.Dropout(config.char_emb_dropout)
@@ -29,27 +33,25 @@ class QANet(nn.Module):
 
         self.char_emb_conv = ConvEmb(in_channels=config.glove_char_dim, out_channels=config.glove_char_dim, kernel_size=5)
 
-
-        context_input_shape = (config.glove_char_dim+config.glove_word_dim, config.context_limit)
-        question_input_shape = (config.glove_char_dim+config.glove_word_dim, config.question_limit)
+        glove_dim = config.glove_char_dim+config.glove_word_dim
 
         self.context_highway = CnnHighway(num_layers=config.hw_layers,
-                                          input_size=context_input_shape,
-                                          d_model=context_input_shape[0],
+                                          input_shape=(glove_dim, config.context_limit),
+                                          out_channels=glove_dim,
                                           kernel_size=config.hw_kernel,
                                           stride=config.hw_stride,
-                                          dropout=config.general_dropout)
+                                          dropout=config.highway_dropout)
 
         self.question_highway = CnnHighway(num_layers=config.hw_layers,
-                                           input_size=question_input_shape,
-                                           d_model=context_input_shape[0],
+                                           input_shape=(glove_dim, config.question_limit),
+                                           out_channels=glove_dim,
                                            kernel_size=config.hw_kernel,
                                            stride=config.hw_stride,
-                                           dropout=config.general_dropout)
+                                           dropout=config.highway_dropout)
         print('created context highways')
         # highway does not change the shape of the data
         # input shape should still be (batch_size, hidden_size, context/question_limit, glove_char_dim+glove_word_dim)
-        self.map_highway_to_d_model = nn.Conv1d(in_channels=context_input_shape[0], out_channels=config.d_model, kernel_size=1)
+        self.map_highway_to_d_model = nn.Conv1d(in_channels=glove_dim, out_channels=config.d_model, kernel_size=1)
         
         context_input_shape = (config.d_model, config.context_limit)
         question_input_shape = (config.d_model, config.question_limit)
@@ -57,7 +59,7 @@ class QANet(nn.Module):
         self.stacked_embedding_encoder_block1 = StackedEncoderBlock(num_encoder_blocks=config.num_emb_blocks,
                                                                     num_conv_blocks=config.num_emb_conv,
                                                                     kernel_size=config.emb_kernel,
-                                                                    d_model = config.d_model,
+                                                                    out_channels = config.d_model,
                                                                     input_shape=context_input_shape,
                                                                     depthwise=config.emb_depthwise,
                                                                     num_heads = config.mod_num_heads,
@@ -72,8 +74,8 @@ class QANet(nn.Module):
         # context and question input shapes should not be changing after stacked embedding encoder block
 
 
-        self.context_query_attention = ContextQueryAttention(config=config, C_shape=context_input_shape, Q_shape=question_input_shape, dropout=config.general_dropout)
-        print('created query attention')
+        self.context_query_attention = ContextQueryAttention(config=config, C_shape=context_input_shape, Q_shape=question_input_shape, dropout=config.cqa_dropout)
+
         attention_shape = (config.d_model*4, config.context_limit)
 
         self.map_attention_to_d_model = nn.Conv1d(in_channels=attention_shape[0], out_channels=config.d_model, kernel_size=1)
@@ -83,7 +85,7 @@ class QANet(nn.Module):
         self.stacked_model_encoder_blocks1 = StackedEncoderBlock(num_encoder_blocks=config.num_mod_blocks,
                                                                 num_conv_blocks=config.num_mod_conv,
                                                                 kernel_size=config.mod_kernel,
-                                                                d_model=config.d_model,
+                                                                out_channels=config.d_model,
                                                                 input_shape=input_shape,
                                                                 depthwise=config.mod_depthwise,
                                                                 num_heads=config.mod_num_heads,
@@ -92,14 +94,16 @@ class QANet(nn.Module):
                                                                 general_dropout=config.general_dropout)
 
 
-
-        input_shape = (config.d_model, config.context_limit)
-
         self.start_prob_linear = LinearLogit(in_features=config.d_model*2, out_features=1)
         self.end_prob_linear = LinearLogit(in_features=config.d_model*2, out_features=1)
 
 
-    def forward(self, context_word_emb, context_char_emb, question_word_emb, question_char_emb):
+    def forward(self, context_word_idxs, context_char_idxs, question_word_idxs, question_char_idxs):
+
+        context_word_emb = self.word_embedding(context_word_idxs)
+        context_char_emb = self.char_embedding(context_char_idxs)
+        question_word_emb = self.word_embedding(question_word_idxs)
+        question_char_emb = self.char_embedding(question_char_idxs)
 
         context_word_emb = self.context_word_embed_dropout(context_word_emb)
         context_char_emb = self.context_char_embed_dropout(context_char_emb)

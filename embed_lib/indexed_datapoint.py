@@ -1,6 +1,6 @@
 import numpy as np
 
-class EmbDatapoint:
+class IndexedDatapoint:
     def __init__(self, config_input):
         self.config = config_input
 

@@ -15,11 +15,11 @@ from helper_functions import exact_match_score, f1_score
 import gc
 
 class QANetWrapper:
-    def __init__(self, config, checkpoint_path):
+    def __init__(self, config, embedding, checkpoint_path):
         print('in QANetWrapper')
         self.config = config
         self.checkpoint_path = checkpoint_path
-        self.net = QANet(config)
+        self.net = QANet(config=config, word_emb_weights=torch.FloatTensor(embedding['word_emb_weights']), char_emb_weights=torch.FloatTensor(embedding['char_emb_weights']))
         if self.config.cuda_flag:
             self.net = self.net.cuda()
         self.optimizer = self.__get_optimizer(config.optimizer_name)
@@ -70,11 +70,11 @@ class QANetWrapper:
                     self.optimizer = self.__learning_rate_warm_up(optimizer=self.optimizer, global_step=self.global_step)
                 self.optimizer.zero_grad()
 
-                context_word_emb, context_char_emb, question_word_emb, question_char_emb, answer_start_idx, answer_end_idx, qa_id = self.__extract_from_batch(batch=batch, volatile_flag=volatile_flag)
-                start_logit, end_logit, context_word_mask = self.net.forward(context_word_emb=context_word_emb,
-                                                                           context_char_emb=context_char_emb,
-                                                                           question_word_emb=question_word_emb,
-                                                                           question_char_emb=question_char_emb)
+                context_word_idxs, context_char_idxs, question_word_idxs, question_char_idxs, answer_start_idx, answer_end_idx, qa_id = self.__extract_from_batch(batch=batch, volatile_flag=volatile_flag)
+                start_logit, end_logit, context_word_mask = self.net.forward(context_word_idxs=context_word_idxs,
+                                                                           context_char_idxs=context_char_idxs,
+                                                                           question_word_idxs=question_word_idxs,
+                                                                           question_char_idxs=question_char_idxs)
 
 
                 if self.config.pred_mask:
@@ -192,12 +192,12 @@ class QANetWrapper:
         prediction_dict = {}
         for i, batch in enumerate(evaloader):
 
-            context_word_emb, context_char_emb, question_word_emb, question_char_emb, answer_start_idx, answer_end_idx, qa_id = self.__extract_from_batch(batch=batch, volatile_flag=volatile_flag)
+            context_word_idxs, context_char_idxs, question_word_idxs, question_char_idxs, answer_start_idx, answer_end_idx, qa_id = self.__extract_from_batch(batch=batch, volatile_flag=volatile_flag)
 
-            start_logit, end_logit, context_word_mask = self.net.forward(context_word_emb=context_word_emb,
-                                                                        context_char_emb=context_char_emb,
-                                                                        question_word_emb=question_word_emb,
-                                                                        question_char_emb=question_char_emb)
+            start_logit, end_logit, context_word_mask = self.net.forward(context_word_idxs=context_word_idxs,
+                                                                        context_char_idxs=context_char_idxs,
+                                                                        question_word_idxs=question_word_idxs,
+                                                                        question_char_idxs=question_char_idxs)
             if self.config.pred_mask:
                 start_logit_masked, end_logit_masked = self.__mask_output_logits(start_logit=start_logit, end_logit=end_logit, mask=context_word_mask)
                 p1 = F.softmax(start_logit_masked, dim=1)
@@ -227,30 +227,32 @@ class QANetWrapper:
         return total_loss, prediction_dict
 
     def __extract_from_batch(self, batch, volatile_flag=False):
-        context_word_emb = batch['context_word_emb']  # shape = [N, CL, Dim]
-        context_char_emb = batch['context_char_emb']
-        question_word_emb = batch['question_word_emb']
-        question_char_emb = batch['question_char_emb']
-        answer_start_idx = batch['answer_start_idx']
+
+
+        context_word_idxs = batch['context_word_idxs']  # shape = [N, CL, Dim]
+        context_char_idxs = batch['context_char_idxs']
+        question_word_idxs = batch['question_word_idxs']
+        question_char_idxs = batch['question_char_idxs']
+        answer_start_idx = batch['context_true_answer_start']
         # print('answer start idx.shape', answer_start_idx.shape)
-        answer_end_idx = batch['answer_end_idx']
+        answer_end_idx = batch['context_true_answer_end']
         qa_id = batch['qa_id']
 
-        context_word_emb = Variable(context_word_emb, volatile=volatile_flag)
-        context_char_emb = Variable(context_char_emb, volatile=volatile_flag)
-        question_word_emb = Variable(question_word_emb, volatile=volatile_flag)
-        question_char_emb = Variable(question_char_emb, volatile=volatile_flag)
+        context_word_idxs = Variable(context_word_idxs, volatile=volatile_flag)
+        context_char_idxs = Variable(context_char_idxs, volatile=volatile_flag)
+        question_word_idxs = Variable(question_word_idxs, volatile=volatile_flag)
+        question_char_idxs = Variable(question_char_idxs, volatile=volatile_flag)
         answer_start_idx = Variable(answer_start_idx.long(), volatile=volatile_flag)
         answer_end_idx = Variable(answer_end_idx.long(), volatile=volatile_flag)
         if self.config.cuda_flag:
-            context_word_emb = context_word_emb.cuda()
-            context_char_emb = context_char_emb.cuda()
-            question_word_emb = question_word_emb.cuda()
-            question_char_emb = question_char_emb.cuda()
+            context_word_idxs = context_word_idxs.cuda()
+            context_char_idxs = context_char_idxs.cuda()
+            question_word_idxs = question_word_idxs.cuda()
+            question_char_idxs = question_char_idxs.cuda()
             answer_start_idx = answer_start_idx.cuda()
             answer_end_idx = answer_end_idx.cuda()
 
-        return context_word_emb, context_char_emb, question_word_emb, question_char_emb, answer_start_idx, answer_end_idx, qa_id
+        return context_word_idxs, context_char_idxs, question_word_idxs, question_char_idxs, answer_start_idx, answer_end_idx, qa_id
 
 
     def predict(self, testloader, test_raw):
@@ -261,12 +263,12 @@ class QANetWrapper:
         prediction_dict = {}
         for i, batch in enumerate(testloader):
 
-            context_word_emb, context_char_emb, question_word_emb, question_char_emb, answer_start_idx, answer_end_idx, qa_id = self.__extract_from_batch(batch=batch, volatile_flag=volatile_flag)
+            context_word_idxs, context_char_idxs, question_word_idxs, question_char_idxs, answer_start_idx, answer_end_idx, qa_id = self.__extract_from_batch(batch=batch, volatile_flag=volatile_flag)
 
-            start_logit, end_logit, context_word_mask = self.net.forward(context_word_emb=context_word_emb,
-                                                                        context_char_emb=context_char_emb,
-                                                                        question_word_emb=question_word_emb,
-                                                                        question_char_emb=question_char_emb)
+            start_logit, end_logit, context_word_mask = self.net.forward(context_word_idxs=context_word_idxs,
+                                                                        context_char_idxs=context_char_idxs,
+                                                                        question_word_idxs=question_word_idxs,
+                                                                        question_char_idxs=question_char_idxs)
 
 
             if self.config.pred_mask:

@@ -5,6 +5,32 @@ import re
 import sys
 
 
+def calc_padding(input_size, kernel_size, stride):
+    """
+    we want to calculate the padding such that y.shape = x.shape for y = layer(x)
+    output_height = input_height + 2*padding_height - kernel_height +1 (assuming stride=1)
+    output_width = input_width + 2*padding_width - kernel_width + 1 (assuming stride=1)
+    we want output_height = input_height and output_width = input_width. Therefore...
+    padding_height = (kernel_height - 1)/2
+    padding_width = (kernel_width - 1)/2
+    """
+    # default of pytorch for input_size = (C_in, H_in, W_in)
+    if len(input_size) == 3:
+        if stride != (1, 1):
+            raise ValueError("calc padding only works for stride=(1,1)")
+        padding = (0, 0)
+        if kernel_size[0] % 2 == 0 or kernel_size[1] % 2 == 0:
+            raise ValueError(
+                "the kernel size: {} is incompatible with CnnHighway. With this kernel, the conv output shape will not equal the input shape".format(
+                    kernel_size))
+        padding_height = int((kernel_size[0] - 1) / 2)
+        padding_width = int((kernel_size[1] - 1) / 2)
+        return (padding_height, padding_width)
+    if len(input_size) == 2:
+        if stride != 1:
+            raise ValueError("calc padding only works for stride=(1)")
+        padding = int((kernel_size - 1) / 2)
+        return padding
 
 
 def exponential_mask(tensor, mask, very_larg_negative_number=-1e20):
@@ -91,3 +117,5 @@ def evaluate_predictions(dataset, predictions):
     print()
 
     return {'exact_match': exact_match, 'f1': f1}
+
+
